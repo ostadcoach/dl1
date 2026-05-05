@@ -1,36 +1,33 @@
-# This is a basic workflow to help you get started with Actions
+name: Download File to Repo
 
-name: CI
-
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+    inputs:
+      download_url:
+        description: 'insert the direct download link here'
+        required: true
+        type: string
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  download-job:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
-
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      - name: Create Directory and Download File
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          mkdir -p Downloaded_Files
+          cd Downloaded_Files
+          curl -O -L "${{ github.event.inputs.download_url }}"
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add Downloaded_Files/
+          git commit -m "Add downloaded file from ${{ github.event.inputs.download_url }}" || echo "No changes to commit"
+          git push
